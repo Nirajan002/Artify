@@ -8,7 +8,7 @@ import type { RootState } from "../app/store";
 import { clearToken } from "../features/auth/authSlice";
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "https://localhost:7000";
+  import.meta.env.VITE_API_URL ?? "";
 
 export interface ApiResponse<T> {
   success: boolean;
