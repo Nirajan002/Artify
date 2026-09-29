@@ -1,66 +1,39 @@
 ﻿using Artify.API.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Artify.API.Data;
-
-public static class DbSeeder
+namespace Artify.API.Data
 {
-    public static async Task SeedAsync(ApplicationDbContext db, IConfiguration config)
+    public static class DbSeeder
     {
-        if (!await db.Users.AnyAsync())
+        public static async Task SeedAsync(
+            ApplicationDbContext db,
+            IConfiguration config)
         {
-            // Read admin password from configuration / user-secrets, never hardcode
-            var adminPw = config["Seed:AdminPassword"] ?? throw new Exception("Seed:AdminPassword missing");
-            var customerPw = config["Seed:CustomerPassword"] ?? adminPw;
-
-            db.Users.AddRange(
-                new User
-                {
-                    FirstName = "Admin",
-                    LastName = "Artify",
-                    Email = "admin@artify.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPw),
-                    Role = UserRole.Admin
-                },
-                new User
-                {
-                    FirstName = "Ram",
-                    LastName = "Sharma",
-                    Email = "ram@example.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(customerPw)
-                },
-                new User
-                {
-                    FirstName = "Sita",
-                    LastName = "Thapa",
-                    Email = "sita@example.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(customerPw)
-                });
-            await db.SaveChangesAsync();
-        }
-
-        if (!await db.Artworks.AnyAsync())
-        {
-            var types = Enum.GetValues<ArtworkType>();
-            var artworks = Enumerable.Range(1, 18).Select(i => new Artwork
+            // Seed only Admin
+            if (!await db.Users.AnyAsync(u => u.Role == UserRole.Admin))
             {
-                Title = $"Sample Artwork {i}",
-                Description = "A beautiful sample artwork for development.",
-                CategoryId = (i % 9) + 1,
-                ImageUrl = $"https://picsum.photos/seed/artify{i}/800/1000",
-                ThumbnailUrl = $"https://picsum.photos/seed/artify{i}/300/400",
-                ArtworkType = types[i % types.Length],
-                OriginalPrice = 5000 + i * 1500,
-                Status = ArtworkStatus.Published,
-                Variants =
+                var adminPassword = config["Seed:AdminPassword"];
+
+                if (string.IsNullOrWhiteSpace(adminPassword))
                 {
-                    new ArtworkVariant { VariantType = VariantType.Original, BasePrice = 5000 + i * 1500, StockQuantity = 1 },
-                    new ArtworkVariant { VariantType = VariantType.Poster, BasePrice = 1200, StockQuantity = 50 },
-                    new ArtworkVariant { VariantType = VariantType.Canvas, BasePrice = 3500, StockQuantity = 30 },
+                    throw new InvalidOperationException(
+                        "Seed:AdminPassword is not configured."
+                    );
                 }
-            });
-            db.Artworks.AddRange(artworks);
-            await db.SaveChangesAsync();
+
+                var admin = new User
+                {
+                    FirstName = "Artify",
+                    LastName = "Admin",
+                    Email = "admin@artify.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                    Role = UserRole.Admin
+                };
+
+                db.Users.Add(admin);
+
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

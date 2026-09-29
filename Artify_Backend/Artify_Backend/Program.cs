@@ -85,15 +85,6 @@ builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.Configure<PrintSettings>(builder.Configuration.GetSection("Print"));
 builder.Services.AddScoped<IPrintPricingService, PrintPricingService>();
 builder.Services.AddScoped<ICustomPrintService, CustomPrintService>();
-builder.Services.Configure<ShippingSettings>(builder.Configuration.GetSection("Shipping"));
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-builder.Services.AddScoped<IMaterialService, MaterialService>();
-builder.Services.AddScoped<IFrameService, FrameService>();
-builder.Services.AddScoped<IAdminOrderService, AdminOrderService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddRateLimiter(o =>
 {
