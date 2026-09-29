@@ -1,0 +1,401 @@
+# ============================================================
+# ARTIFY - Full Stack .gitignore
+# ASP.NET Core Web API + React TypeScript
+# ============================================================
+
+
+# ============================================================
+# GENERAL / OS
+# ============================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Windows thumbnail cache
+[Tt]humbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# VS Code local history
+.history/
+
+# Logs
+*.log
+logs/
+log/
+
+
+# ============================================================
+# GIT
+# ============================================================
+
+# Local git files should normally not be ignored.
+# Only use this if a nested repository accidentally exists:
+# Artify_Backend/.git/
+# artify-frontend/.git/
+
+
+# ============================================================
+# .NET / ASP.NET CORE BACKEND
+# ============================================================
+
+# Build output
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+**/.vs/
+
+# Visual Studio solution user files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiling
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# .NET generated files
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/
+.nuget/
+
+# NuGet cache
+.nuget/packages/
+
+# ASP.NET Core generated files
+**/Properties/ServiceDependencies/
+**/Properties/PublishProfiles/
+
+# Publishing output
+publish/
+Publish/
+**/publish/
+**/Publish/
+
+# Generated Razor files
+**/obj/
+
+# Test results
+TestResults/
+**/TestResults/
+*.trx
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Benchmark results
+BenchmarkDotNet.Artifacts/
+
+# MSBuild
+*.binlog
+
+# EF Core local migrations database files
+*.db
+*.db-shm
+*.db-wal
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+
+# Local SQL Server database files
+*.mdf
+*.ldf
+*.ndf
+
+
+# ============================================================
+# ASP.NET CORE / .NET SECRETS
+# ============================================================
+
+# Local development configuration
+appsettings.Development.json
+appsettings.Local.json
+
+# User secrets
+secrets.json
+secrets.*.json
+
+# Dotnet user secrets
+**/secrets/
+
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
+
+# Backend environment files
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+
+# Frontend environment files
+artify-frontend/.env
+artify-frontend/.env.*
+!artify-frontend/.env.example
+!artify-frontend/.env.sample
+
+
+# ============================================================
+# REACT / TYPESCRIPT FRONTEND
+# ============================================================
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+
+build/
+**/build/
+
+# Vite
+.vite/
+**/.vite/
+
+# React / TypeScript cache
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettierignore
+.prettier-cache
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager debug files
+.npm/
+.pnpm-debug.log*
+
+# Coverage
+coverage/
+**/coverage/
+
+# Storybook
+storybook-static/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Vite generated files
+**/.vite/
+
+
+# ============================================================
+# FRONTEND LOCAL CONFIG
+# ============================================================
+
+# Local API configuration
+artify-frontend/.env.local
+artify-frontend/.env.development.local
+artify-frontend/.env.test.local
+artify-frontend/.env.production.local
+
+# Keep example environment files
+!artify-frontend/.env.example
+
+
+# ============================================================
+# TYPESCRIPT
+# ============================================================
+
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+
+# ============================================================
+# TEMPORARY FILES
+# ============================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.old
+*.orig
+
+# Temporary folders
+tmp/
+temp/
+.tmp/
+.temp/
+
+
+# ============================================================
+# DATABASE / LOCAL DEVELOPMENT
+# ============================================================
+
+# SQL Server
+*.mdf
+*.ldf
+*.ndf
+
+# SQLite
+*.db
+*.db3
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Local database backups
+*.bak
+*.dump
+
+
+# ============================================================
+# UPLOADS / USER GENERATED FILES
+# ============================================================
+
+# Ignore local uploaded files if your backend stores them locally
+Artify_Backend/uploads/
+Artify_Backend/Uploads/
+
+# Common generated upload folders
+**/uploads/
+**/Uploads/
+
+# But keep the folder structure in Git
+!**/uploads/.gitkeep
+!**/Uploads/.gitkeep
+
+
+# ============================================================
+# GENERATED / LOCAL FILES
+# ============================================================
+
+# Generated certificates
+*.pfx
+*.p12
+
+# Local HTTPS development certificates
+**/https/
+**/.aspnet/
+*.pem
+*.key
+
+# IMPORTANT:
+# If you intentionally store public certificates in Git,
+# remove the relevant rule above.
+
+
+# ============================================================
+# DOCKER
+# ============================================================
+
+# Docker local overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Docker environment
+.env.docker
+
+
+# ============================================================
+# FRONTEND CACHE
+# ============================================================
+
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.svelte-kit/
+
+
+# ============================================================
+# OPTIONAL: IDE / EDITOR
+# ============================================================
+
+# JetBrains
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.metadata/
+.project
+.classpath
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+
+# ============================================================
+# OPTIONAL: LOCAL BACKUP FILES
+# ============================================================
+
+*.orig
+*.rej
+*.patch
+
+
+# ============================================================
+# ARTIFACTS
+# ============================================================
+
+*.zip
+*.rar
+*.7z
+
+# Generated packages
+*.tar
+*.tar.gz
+
+
+# ============================================================
+# KEEP EMPTY DIRECTORIES
+# ============================================================
+
+# If you need Git to preserve an upload directory:
+# create:
+#
+# Artify_Backend/uploads/.gitkeep
+#
+# and it will be tracked because of the rule above.
