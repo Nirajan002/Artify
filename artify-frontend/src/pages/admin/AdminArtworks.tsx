@@ -1,15 +1,69 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useArchiveArtworkMutation, useGetAdminArtworksQuery } from "../../features/artworks/artworksApi";
+import {
+  useArchiveArtworkMutation,
+  useGetAdminArtworksQuery,
+  useGetAdminArtworkQuery,
+  useUpdateArtworkMutation,
+} from "../../features/artworks/artworksApi";
 import Pagination from "../../components/Pagination";
 import { formatPrice, imageUrl } from "../../utils/image";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { showToast } from "../../components/Toast";
 import { getErrorMessage } from "../../utils/errors";
 
+// Mini hook: fetch + publish a single artwork by id
+function usePublishArtwork() {
+  const [targetId, setTargetId] = useState<number | null>(null);
+  const { data } = useGetAdminArtworkQuery(targetId!, { skip: targetId === null });
+  const [update, { isLoading }] = useUpdateArtworkMutation();
+
+  const publish = async (id: number) => {
+    setTargetId(id);
+  };
+
+  // Once we have the artwork data, publish it
+  const doPublish = async (title: string) => {
+    if (!targetId || !data?.data) return;
+    try {
+      const a = data.data;
+      await update({
+        id: targetId,
+        body: {
+          title: a.title,
+          description: a.description,
+          categoryId: a.categoryId,
+          imageUrl: a.imageUrl,
+          thumbnailUrl: a.thumbnailUrl ?? a.imageUrl,
+          artworkType: a.artworkType,
+          originalPrice: a.originalPrice,
+          isOriginalAvailable: a.isOriginalAvailable,
+          isPrintAvailable: a.isPrintAvailable,
+          status: "Published",
+          variants: a.variants.map((v) => ({
+            variantType: v.variantType,
+            basePrice: v.basePrice,
+            stockQuantity: v.stockQuantity,
+            isAvailable: v.isAvailable,
+          })),
+        },
+      }).unwrap();
+      showToast(`"${title}" is now published.`, "success");
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
+    } finally {
+      setTargetId(null);
+    }
+  };
+
+  return { publish, doPublish, isLoading, ready: !!data?.data, targetId };
+}
+
 export default function AdminArtworks() {
   const [params, setParams] = useSearchParams();
   const [archiveTarget, setArchiveTarget] = useState<{ id: number; title: string } | null>(null);
+  const [publishTarget, setPublishTarget] = useState<{ id: number; title: string } | null>(null);
+  const publisher = usePublishArtwork();
 
   const page = Number(params.get("page") ?? 1);
   const search = params.get("search") ?? "";
@@ -27,6 +81,13 @@ export default function AdminArtworks() {
     } finally {
       setArchiveTarget(null);
     }
+  };
+
+  const handlePublish = async () => {
+    if (!publishTarget) return;
+    await publisher.publish(publishTarget.id);
+    await publisher.doPublish(publishTarget.title);
+    setPublishTarget(null);
   };
 
   return (
@@ -118,6 +179,14 @@ export default function AdminArtworks() {
                       <td>
                         <div className="action-btns">
                           <Link to={`/admin/artworks/${a.artworkId}`} className="btn-action">Edit</Link>
+                          {(a.status === "Draft" || a.status === "Unpublished") && (
+                            <button
+                              onClick={() => setPublishTarget({ id: a.artworkId, title: a.title })}
+                              className="btn-action btn-action--success"
+                            >
+                              Publish
+                            </button>
+                          )}
                           {a.status !== "Archived" && (
                             <button
                               onClick={() => setArchiveTarget({ id: a.artworkId, title: a.title })}
@@ -150,6 +219,16 @@ export default function AdminArtworks() {
         confirmDanger
         onConfirm={handleArchive}
         onCancel={() => setArchiveTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!publishTarget}
+        title="Publish Artwork"
+        message={`Publish "${publishTarget?.title}"? It will become visible in the shop immediately.`}
+        confirmLabel="Publish"
+        confirmDanger={false}
+        onConfirm={handlePublish}
+        onCancel={() => setPublishTarget(null)}
       />
     </main>
   );

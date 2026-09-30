@@ -70,7 +70,7 @@ export interface ArtworkFilters {
 
 export interface SaveVariantRequest {
   variantType: VariantType;
-  basePrice: number;
+  basePrice: number | string;   // string during editing, number on submit
   stockQuantity: number;
   isAvailable: boolean;
 }

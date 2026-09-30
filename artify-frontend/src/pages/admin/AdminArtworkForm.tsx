@@ -15,7 +15,7 @@ import { validateImageFile } from "../../utils/files";
 import { imageUrl } from "../../utils/image";
 import { getErrorMessage } from "../../utils/errors";
 
-const STATUSES = ["Draft", "Published", "Unpublished", "Sold", "Archived"];
+const STATUSES = ["Published", "Draft", "Unpublished", "Sold", "Archived"];
 const VARIANT_TYPES = ["Original", "Poster", "Canvas", "FramedPrint"] as const;
 
 type ArtworkFormProps = {
@@ -54,10 +54,10 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
   const [variants, setVariants] = useState<SaveVariantRequest[]>(
     artwork?.variants?.map((v) => ({
       variantType: v.variantType as SaveVariantRequest["variantType"],
-      basePrice: v.basePrice,
+      basePrice: String(v.basePrice),   // keep as string so typing doesn't snap to 0
       stockQuantity: v.stockQuantity,
       isAvailable: v.isAvailable,
-    })) ?? [{ variantType: "Original", basePrice: 0, stockQuantity: 1, isAvailable: true }],
+    })) ?? [{ variantType: "Original", basePrice: "", stockQuantity: 1, isAvailable: true }],
   );
   const [error, setError] = useState("");
   const [fileError, setFileError] = useState("");
@@ -75,7 +75,7 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
 
   const addVariant = () => {
     const unused = VARIANT_TYPES.find((t) => !variants.some((v) => v.variantType === t));
-    if (unused) setVariants((vs) => [...vs, { variantType: unused, basePrice: 0, stockQuantity: 1, isAvailable: true }]);
+    if (unused) setVariants((vs) => [...vs, { variantType: unused, basePrice: "", stockQuantity: 1, isAvailable: true }]);
   };
 
   const removeVariant = (i: number) => setVariants((vs) => vs.filter((_, idx) => idx !== i));
@@ -94,7 +94,11 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
         imageUrl: img, thumbnailUrl: img,
         artworkType: artworkType as (typeof ARTWORK_TYPES)[number],
         originalPrice: Number(originalPrice),
-        isOriginalAvailable, isPrintAvailable, status, variants,
+        isOriginalAvailable, isPrintAvailable, status,
+        variants: variants.map((v) => ({
+          ...v,
+          basePrice: Number(v.basePrice) || 0,
+        })),
       };
 
       if (isEdit) await update({ id: Number(id), body }).unwrap();
@@ -217,7 +221,8 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
                   </select>
 
                   <input type="number" min={0} placeholder="Price"
-                    value={v.basePrice} onChange={(e) => updateVariant(i, { basePrice: Number(e.target.value) })} />
+                    value={v.basePrice}
+                    onChange={(e) => updateVariant(i, { basePrice: e.target.value })} />
 
                   <input type="number" min={0} placeholder="Stock"
                     value={v.stockQuantity} onChange={(e) => updateVariant(i, { stockQuantity: Number(e.target.value) })} />
