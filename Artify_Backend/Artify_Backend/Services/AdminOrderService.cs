@@ -39,6 +39,65 @@ public class AdminOrderService(ApplicationDbContext db, IOrderService orders) : 
         return new PagedResult<AdminOrderListDto> { Items = items, Page = page, PageSize = size, TotalCount = total };
     }
 
+    public async Task<OrderDetailDto> GetByIdAsync(int orderId)
+    {
+        var order = await db.Orders.AsNoTracking()
+            .Where(o => o.OrderId == orderId)
+            .Select(o => new
+            {
+                o.OrderId,
+                o.UserId,
+                o.OrderNumber,
+                o.ShippingAddress,
+                o.Subtotal,
+                o.ShippingFee,
+                o.Discount,
+                o.TotalAmount,
+                o.OrderStatus,
+                o.PaymentStatus,
+                o.CreatedAt,
+                PaymentMethod = o.Payment != null ? o.Payment.PaymentMethod : Entities.PaymentMethod.CashOnDelivery,
+                Items = o.Items.Select(i => new OrderItemDto
+                {
+                    OrderItemId = i.OrderItemId,
+                    ItemType = i.ItemType,
+                    ArtworkId = i.ArtworkId,
+                    Title = i.ItemTitle ?? "Item",
+                    ImageUrl = i.ItemImageUrl ?? "",
+                    VariantType = i.VariantType,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    TotalPrice = i.TotalPrice,
+                    CustomWidth = i.CustomWidth,
+                    CustomHeight = i.CustomHeight,
+                    MaterialName = i.MaterialName,
+                    FrameName = i.FrameName
+                }).ToList()
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Order not found");
+
+        var hasCustomPrint = order.Items.Any(i => i.ItemType == CartItemType.CustomPrint);
+        return new OrderDetailDto
+        {
+            OrderId = order.OrderId,
+            OrderNumber = order.OrderNumber,
+            TotalAmount = order.TotalAmount,
+            OrderStatus = order.OrderStatus,
+            PaymentStatus = order.PaymentStatus,
+            ItemCount = order.Items.Sum(i => i.Quantity),
+            ThumbnailUrl = order.Items.FirstOrDefault()?.ImageUrl ?? "",
+            CreatedAt = order.CreatedAt,
+            ShippingAddress = order.ShippingAddress,
+            Subtotal = order.Subtotal,
+            ShippingFee = order.ShippingFee,
+            Discount = order.Discount,
+            PaymentMethod = order.PaymentMethod,
+            Items = order.Items,
+            StatusFlow = OrderStatusFlow.For(hasCustomPrint).Select(s => s.ToString()).ToList(),
+            CanCancel = OrderStatusFlow.CanCancel(order.OrderStatus)
+        };
+    }
+
     public async Task<OrderDetailDto> AdvanceStatusAsync(int orderId, AdvanceOrderStatusDto dto)
     {
         var order = await db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.OrderId == orderId)

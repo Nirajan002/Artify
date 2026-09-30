@@ -6,6 +6,8 @@ import {
 import { formatPrice, imageUrl } from "../../utils/image";
 import { humanize } from "../../utils/constants";
 import { getErrorMessage } from "../../utils/errors";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import { showToast } from "../../components/Toast";
 
 export default function AdminSubmissionDetail() {
   const { id } = useParams();
@@ -15,55 +17,77 @@ export default function AdminSubmissionDetail() {
   const [reject, { isLoading: rejecting }] = useRejectSubmissionMutation();
 
   const [showReject, setShowReject] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
 
-  if (isLoading) return <div style={{ padding: "2rem" }}><p className="muted">Loading…</p></div>;
-  if (isError || !data) return <div style={{ padding: "2rem" }}><p className="muted">Submission not found.</p></div>;
+  if (isLoading) {
+    return (
+      <main>
+        <div className="table-loading">
+          {[...Array(4)].map((_, i) => <div key={i} className="skeleton-row" style={{ height: "60px" }} />)}
+        </div>
+      </main>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <main>
+        <div className="state-card state-card--error">
+          <p>Submission not found.</p>
+          <Link to="/admin/submissions" className="btn-action">← Back</Link>
+        </div>
+      </main>
+    );
+  }
 
   const s = data.data;
   const isPending = s.status === "Pending";
 
   const onApprove = async () => {
-    if (!window.confirm(`Approve "${s.title}" and publish it in the shop?`)) return;
+    setShowApproveConfirm(false);
     setError("");
-    try { await approve({ id: subId }).unwrap(); } catch (e) { setError(getErrorMessage(e)); }
+    try {
+      await approve({ id: subId }).unwrap();
+      showToast(`"${s.title}" approved and published in the shop.`, "success");
+    } catch (e) {
+      setError(getErrorMessage(e));
+      showToast(getErrorMessage(e), "error");
+    }
   };
 
   const onReject = async () => {
-    if (reason.trim().length < 5) { setError("Please give a rejection reason (at least 5 characters)."); return; }
+    if (reason.trim().length < 5) {
+      setError("Please give a rejection reason (at least 5 characters).");
+      return;
+    }
     setError("");
     try {
       await reject({ id: subId, reason: reason.trim() }).unwrap();
       setShowReject(false);
-    } catch (e) { setError(getErrorMessage(e)); }
-  };
-
-  const cardStyle: React.CSSProperties = {
-    background: "#0d1f17",
-    border: "1px solid rgba(200,255,0,0.08)",
-    borderRadius: "12px",
-    padding: "1.5rem",
-    marginBottom: "1.25rem",
+      showToast(`"${s.title}" rejected.`, "info");
+    } catch (e) {
+      setError(getErrorMessage(e));
+    }
   };
 
   return (
     <main>
-      <Link to="/admin/submissions" style={{ color: "#5a8070", fontSize: "0.875rem", display: "inline-block", marginBottom: "1.5rem" }}>
+      <Link to="/admin/submissions" className="back-link" style={{ marginBottom: "1.5rem", display: "inline-flex" }}>
         ← Back to submissions
       </Link>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "2rem", alignItems: "start" }}>
+      <div className="submission-detail-grid">
         {/* Image */}
-        <div>
+        <div className="submission-image">
           <img
             src={imageUrl(s.imageUrl)}
             alt={s.title}
-            style={{ width: "100%", borderRadius: "12px", border: "1px solid rgba(200,255,0,0.1)" }}
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+        <div className="submission-info">
           <div>
             <span className={`badge badge--${s.status.toLowerCase()}`} style={{ marginBottom: "0.75rem", display: "inline-flex" }}>
               {s.status}
@@ -72,29 +96,24 @@ export default function AdminSubmissionDetail() {
           </div>
 
           {/* Submitter */}
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a6048", marginBottom: "0.75rem" }}>
-              Submitter
-            </h3>
-            <p style={{ color: "#d4e8d8", fontWeight: 600 }}>{s.submitterName}</p>
+          <div className="detail-card">
+            <h3 className="detail-label" style={{ marginBottom: "0.75rem" }}>Submitter</h3>
+            <p className="user-name">{s.submitterName}</p>
             <p className="muted">{s.email}</p>
             <p className="muted">{s.phoneNumber}</p>
           </div>
 
           {/* Artwork details */}
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a6048", marginBottom: "0.75rem" }}>
-              Artwork details
-            </h3>
+          <div className="detail-card">
+            <h3 className="detail-label" style={{ marginBottom: "0.75rem" }}>Artwork Details</h3>
             <p style={{ color: "#8ab89e", marginBottom: "0.5rem", fontSize: "0.875rem" }}>
-              {s.category} · {humanize(s.artworkType)} · <strong style={{ color: "#C8FF00" }}>{formatPrice(s.originalPrice)}</strong>
+              {s.category} · {humanize(s.artworkType)} ·{" "}
+              <strong style={{ color: "#C8FF00" }}>{formatPrice(s.originalPrice)}</strong>
             </p>
             <p style={{ color: "#8ab89e", fontSize: "0.9rem", lineHeight: 1.6 }}>{s.description}</p>
             {s.additionalInformation && (
               <>
-                <p style={{ color: "#5a8070", fontSize: "0.8rem", marginTop: "1rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Additional info
-                </p>
+                <p className="detail-label" style={{ marginTop: "1rem" }}>Additional info</p>
                 <p style={{ color: "#8ab89e", fontSize: "0.875rem" }}>{s.additionalInformation}</p>
               </>
             )}
@@ -102,16 +121,21 @@ export default function AdminSubmissionDetail() {
 
           {/* Review history */}
           {!isPending && (
-            <div style={cardStyle}>
-              <h3 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#3a6048", marginBottom: "0.75rem" }}>
-                Review
-              </h3>
+            <div className="detail-card">
+              <h3 className="detail-label" style={{ marginBottom: "0.75rem" }}>Review Decision</h3>
               <p style={{ color: "#8ab89e", fontSize: "0.9rem" }}>
                 {s.status} on {s.reviewedAt && new Date(s.reviewedAt).toLocaleString()}
               </p>
-              {s.adminComment && <p style={{ color: "#8ab89e", fontSize: "0.875rem", marginTop: "0.5rem" }}>Note: {s.adminComment}</p>}
+              {s.adminComment && (
+                <p style={{ color: "#8ab89e", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                  Note: {s.adminComment}
+                </p>
+              )}
               {s.artworkId && (
-                <Link to={`/artworks/${s.artworkId}`} style={{ color: "#C8FF00", fontSize: "0.875rem", display: "inline-block", marginTop: "0.75rem" }}>
+                <Link
+                  to={`/artworks/${s.artworkId}`}
+                  style={{ color: "#C8FF00", fontSize: "0.875rem", display: "inline-block", marginTop: "0.75rem" }}
+                >
                   View published artwork →
                 </Link>
               )}
@@ -123,7 +147,11 @@ export default function AdminSubmissionDetail() {
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {!showReject ? (
                 <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button onClick={onApprove} disabled={approving} style={{ flex: 1, padding: "0.75rem" }}>
+                  <button
+                    onClick={() => setShowApproveConfirm(true)}
+                    disabled={approving}
+                    style={{ flex: 1, padding: "0.75rem" }}
+                  >
                     {approving ? "Approving…" : "✓ Approve"}
                   </button>
                   <button
@@ -135,9 +163,10 @@ export default function AdminSubmissionDetail() {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div className="detail-card" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <h3 className="detail-label">Reason for rejection</h3>
                   <label className="field">
-                    <span>Reason for rejection (required)</span>
+                    <span>Reason (required, min 5 characters)</span>
                     <textarea
                       rows={3}
                       value={reason}
@@ -149,8 +178,10 @@ export default function AdminSubmissionDetail() {
                     <button className="danger" onClick={onReject} disabled={rejecting} style={{ flex: 1 }}>
                       {rejecting ? "Rejecting…" : "Confirm rejection"}
                     </button>
-                    <button onClick={() => { setShowReject(false); setError(""); }}
-                      style={{ background: "none", color: "#5a8070", border: "1px solid rgba(200,255,0,0.1)" }}>
+                    <button
+                      onClick={() => { setShowReject(false); setError(""); setReason(""); }}
+                      style={{ background: "none", color: "#5a8070", border: "1px solid rgba(200,255,0,0.1)", boxShadow: "none" }}
+                    >
                       Cancel
                     </button>
                   </div>
@@ -162,6 +193,15 @@ export default function AdminSubmissionDetail() {
           {error && <p className="error" role="alert">{error}</p>}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showApproveConfirm}
+        title="Approve Submission"
+        message={`Approve "${s.title}" and publish it in the shop?`}
+        confirmLabel="Approve & Publish"
+        onConfirm={onApprove}
+        onCancel={() => setShowApproveConfirm(false)}
+      />
     </main>
   );
 }

@@ -5,6 +5,8 @@ import {
   type Address, type SaveAddressRequest,
 } from "../features/addresses/addressApi";
 import { getErrorMessage, getFieldErrors } from "../utils/errors";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { showToast } from "../components/Toast";
 
 const empty: SaveAddressRequest = {
   fullName: "", phoneNumber: "", addressLine1: "", addressLine2: "",
@@ -34,6 +36,7 @@ export default function Addresses() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const open = (a?: Address) => {
     setForm(a ? { ...a } : empty);
@@ -55,8 +58,14 @@ export default function Addresses() {
   };
 
   const onDelete = async (id: number) => {
-    if (!window.confirm("Delete this address?")) return;
-    try { await remove(id).unwrap(); } catch (e) { setError(getErrorMessage(e)); }
+    try {
+      await remove(id).unwrap();
+      showToast("Address deleted.", "info");
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   if (isLoading) return <div className="page" style={{ textAlign: "center" }}><p className="muted">Loading addresses…</p></div>;
@@ -135,11 +144,21 @@ export default function Addresses() {
                   Make default
                 </button>
               )}
-              <button className="danger" onClick={() => onDelete(a.addressId)}>Delete</button>
+              <button className="danger" onClick={() => setDeleteTarget(a.addressId)}>Delete</button>
             </div>
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Address"
+        message="Are you sure you want to delete this address? This cannot be undone."
+        confirmLabel="Delete"
+        confirmDanger
+        onConfirm={() => deleteTarget !== null && onDelete(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </main>
   );
 }

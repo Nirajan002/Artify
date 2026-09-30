@@ -13,6 +13,7 @@ import ArtworkCardSkeleton from "../components/ArtworkCardSkeleton";
 export default function Shop() {
   const { category: categoryParam } = useParams();
   const [params, setParams] = useSearchParams();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [searchInput, setSearchInput] = useState(params.get("search") ?? "");
   const debouncedSearch = useDebounce(searchInput);
@@ -99,18 +100,49 @@ export default function Shop() {
 
       {/* ── Two-column body ── */}
       <div className="shop__body">
+        {/* Mobile filter toggle */}
+        <button
+          className="shop__filter-toggle"
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+          aria-controls="shop-filters"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={16} height={16}>
+            <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" />
+          </svg>
+          Filters
+          {hasActiveFilters && <span className="shop__filter-toggle-dot" />}
+        </button>
+
+        {/* Mobile overlay */}
+        {filtersOpen && (
+          <div className="shop__filter-overlay" onClick={() => setFiltersOpen(false)} aria-hidden="true" />
+        )}
+
         {/* Filters sidebar */}
-        <aside className="filters">
+        <aside
+          id="shop-filters"
+          className={`filters${filtersOpen ? " filters--open" : ""}`}
+        >
           <div className="filters__header">
             <span className="filters__title">Filters</span>
-            {hasActiveFilters && (
+            <div className="filters__header-actions">
+              {hasActiveFilters && (
+                <button
+                  className="filters__clear-btn"
+                  onClick={() => { setSearchInput(""); setParams({}); }}
+                >
+                  Clear all
+                </button>
+              )}
               <button
-                className="filters__clear-btn"
-                onClick={() => { setSearchInput(""); setParams({}); }}
+                className="filters__close-btn"
+                onClick={() => setFiltersOpen(false)}
+                aria-label="Close filters"
               >
-                Clear all
+                ✕
               </button>
-            )}
+            </div>
           </div>
 
           {!categoryParam && (

@@ -1,33 +1,73 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 
 const LINKS = [
-  { to: "/admin", label: "Dashboard", end: true },
-  { to: "/admin/artworks", label: "Artworks" },
-  { to: "/admin/submissions", label: "Submissions" },
-  { to: "/admin/orders", label: "Orders" },
-  { to: "/admin/materials", label: "Materials" },
-  { to: "/admin/frames", label: "Frames" },
-  { to: "/admin/users", label: "Users" },
+  { to: "/admin", label: "Dashboard", icon: "◈", end: true },
+  { to: "/admin/artworks", label: "Artworks", icon: "🖼" },
+  { to: "/admin/submissions", label: "Submissions", icon: "📥" },
+  { to: "/admin/orders", label: "Orders", icon: "📦" },
+  { to: "/admin/materials", label: "Materials", icon: "🎨" },
+  { to: "/admin/frames", label: "Frames", icon: "🖼" },
+  { to: "/admin/users", label: "Users", icon: "👥" },
 ];
 
 export default function AdminLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <Link to="/" style={{ textDecoration: "none" }}>
-          <h2 style={{ fontSize: "1.1rem", color: "#C8FF00", marginBottom: "0.25rem", textTransform: "none", letterSpacing: "normal" }}>
-            Artify
-          </h2>
-        </Link>
-        <p style={{ fontSize: "0.7rem", color: "#3a6048", marginBottom: "1.5rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          Admin Panel
-        </p>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "0.1rem" }}>
+      {/* Mobile top bar */}
+      <div className="admin-topbar">
+        <button
+          className="admin-topbar__toggle"
+          onClick={() => setSidebarOpen((o) => !o)}
+          aria-label="Toggle navigation"
+          aria-expanded={sidebarOpen}
+        >
+          <span className={`hamburger ${sidebarOpen ? "hamburger--open" : ""}`}>
+            <span /><span /><span />
+          </span>
+        </button>
+        <Link to="/" className="admin-topbar__brand">Artify</Link>
+        <span className="admin-topbar__label">Admin</span>
+      </div>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div className="admin-overlay" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`admin-sidebar ${sidebarOpen ? "admin-sidebar--open" : ""}`}>
+        <div className="admin-sidebar__head">
+          <Link to="/" className="admin-sidebar__brand">
+            <span className="admin-sidebar__logo">Artify</span>
+          </Link>
+          <span className="admin-sidebar__badge">Admin Panel</span>
+        </div>
+        <nav className="admin-sidebar__nav">
           {LINKS.map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.end}>{l.label}</NavLink>
+            <NavLink key={l.to} to={l.to} end={l.end} className="admin-sidebar__link">
+              <span className="admin-sidebar__icon">{l.icon}</span>
+              <span>{l.label}</span>
+            </NavLink>
           ))}
         </nav>
+        <div className="admin-sidebar__footer">
+          <Link to="/" className="admin-sidebar__link admin-sidebar__link--exit">
+            <span className="admin-sidebar__icon">←</span>
+            <span>Back to store</span>
+          </Link>
+        </div>
       </aside>
+
+      {/* Content */}
       <div className="admin-content">
         <Outlet />
       </div>

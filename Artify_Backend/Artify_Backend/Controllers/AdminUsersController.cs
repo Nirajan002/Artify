@@ -14,9 +14,9 @@ public class AdminUsersController(IAdminUserService users) : ApiControllerBase
         => Ok(ApiResponse<PagedResult<AdminUserDto>>.Ok(await users.GetListAsync(query)));
 
     [HttpPut("{id:int}/active")]
-    public async Task<ActionResult<ApiResponse<object>>> SetActive(int id, [FromBody] bool isActive)
+    public async Task<ActionResult<ApiResponse<object>>> SetActive(int id, [FromBody] SetUserActiveDto dto)
     {
-        await users.SetActiveAsync(UserId, id, isActive);
-        return Ok(ApiResponse<object>.Ok(null!, isActive ? "User activated" : "User deactivated"));
+        await users.SetActiveAsync(UserId, id, dto.IsActive);
+        return Ok(ApiResponse<object>.Ok(null!, dto.IsActive ? "User activated" : "User deactivated"));
     }
 }

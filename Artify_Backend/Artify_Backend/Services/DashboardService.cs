@@ -42,28 +42,54 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             return new MonthlyPointDto(d.ToString("MMM yyyy"), m?.Revenue ?? 0, m?.Orders ?? 0);
         }).ToList();
 
-        var popularArtworks = await db.OrderItems
+        var topSellers = await db.OrderItems
             .Where(i => i.ArtworkId != null && RevenueStatuses.Contains(i.Order.OrderStatus))
-            .GroupBy(i => new { i.ArtworkId, i.ItemTitle })
+            .GroupBy(i => i.ArtworkId!.Value)
             .Select(g => new
             {
-                g.Key.ArtworkId,
-                g.Key.ItemTitle,
+                ArtworkId = g.Key,
                 UnitsSold = g.Sum(i => i.Quantity),
                 Revenue = g.Sum(i => i.TotalPrice)
             })
-            .OrderByDescending(x => x.UnitsSold).Take(5)
-            .Join(db.Artworks, x => x.ArtworkId, a => a.ArtworkId,
-                (x, a) => new PopularArtworkDto(a.ArtworkId, x.ItemTitle!, a.ThumbnailUrl ?? a.ImageUrl, x.UnitsSold, x.Revenue))
+            .OrderByDescending(x => x.UnitsSold)
+            .Take(5)
             .ToListAsync();
 
-        var salesByCategory = await db.OrderItems
+        var ids = topSellers.Select(x => x.ArtworkId).ToList();
+        var artworkInfo = await db.Artworks.AsNoTracking()
+            .Where(a => ids.Contains(a.ArtworkId))
+            .Select(a => new { a.ArtworkId, a.Title, Image = a.ThumbnailUrl ?? a.ImageUrl })
+            .ToDictionaryAsync(a => a.ArtworkId);
+
+        var popularArtworks = topSellers
+            .Where(x => artworkInfo.ContainsKey(x.ArtworkId))
+            .Select(x => new PopularArtworkDto(
+                x.ArtworkId,
+                artworkInfo[x.ArtworkId].Title,
+                artworkInfo[x.ArtworkId].Image,
+                x.UnitsSold,
+                x.Revenue))
+            .ToList();
+
+        var salesByCategoryRaw = await db.OrderItems
             .Where(i => i.ArtworkId != null && RevenueStatuses.Contains(i.Order.OrderStatus))
-            .Join(db.Artworks, i => i.ArtworkId, a => a.ArtworkId, (i, a) => new { i, a.Category.Name })
-            .GroupBy(x => x.Name)
-            .Select(g => new CategorySalesDto(g.Key, g.Sum(x => x.i.TotalPrice), g.Sum(x => x.i.Quantity)))
+            .Join(db.Artworks,
+                  i => i.ArtworkId!.Value,
+                  a => a.ArtworkId,
+                  (i, a) => new { CategoryName = a.Category.Name, i.TotalPrice, i.Quantity })
+            .GroupBy(x => x.CategoryName)
+            .Select(g => new
+            {
+                Category = g.Key,
+                Revenue = g.Sum(x => x.TotalPrice),
+                UnitsSold = g.Sum(x => x.Quantity)
+            })
             .OrderByDescending(x => x.Revenue)
             .ToListAsync();
+
+                var salesByCategory = salesByCategoryRaw
+                    .Select(x => new CategorySalesDto(x.Category, x.Revenue, x.UnitsSold))
+                    .ToList();
 
         return new DashboardChartsDto { Monthly = monthly, PopularArtworks = popularArtworks, SalesByCategory = salesByCategory };
     }

@@ -3,6 +3,8 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { useCancelOrderMutation, useGetOrderQuery } from "../features/orders/ordersApi";
 import { formatPrice, imageUrl } from "../utils/image";
 import { getErrorMessage } from "../utils/errors";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { showToast } from "../components/Toast";
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -11,6 +13,7 @@ export default function OrderDetail() {
   const { data, isLoading, isError, refetch } = useGetOrderQuery(Number(id), { skip: !id });
   const [cancel, { isLoading: cancelling }] = useCancelOrderMutation();
   const [error, setError] = useState("");
+  const [showCancel, setShowCancel] = useState(false);
 
   if (isLoading) return <div className="page" style={{ textAlign: "center" }}><p className="muted">Loading order…</p></div>;
   if (isError || !data) return (
@@ -22,9 +25,14 @@ export default function OrderDetail() {
   const currentStep = o.orderStatus === "Cancelled" ? -1 : o.statusFlow.indexOf(o.orderStatus);
 
   const onCancel = async () => {
-    if (!window.confirm("Cancel this order?")) return;
+    setShowCancel(false);
     setError("");
-    try { await cancel(o.orderId).unwrap(); } catch (e) { setError(getErrorMessage(e)); }
+    try {
+      await cancel(o.orderId).unwrap();
+      showToast("Order cancelled.", "info");
+    } catch (e) {
+      setError(getErrorMessage(e));
+    }
   };
 
   return (
@@ -108,12 +116,22 @@ export default function OrderDetail() {
 
       <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
         {o.canCancel && (
-          <button className="danger" onClick={onCancel} disabled={cancelling}>
+          <button className="danger" onClick={() => setShowCancel(true)} disabled={cancelling}>
             {cancelling ? "Cancelling…" : "Cancel order"}
           </button>
         )}
         <Link to="/orders" style={{ color: "#5a8070", fontSize: "0.875rem" }}>← Back to orders</Link>
       </div>
+
+      <ConfirmDialog
+        open={showCancel}
+        title="Cancel Order"
+        message={`Cancel order ${o.orderNumber}? This action cannot be undone.`}
+        confirmLabel="Cancel Order"
+        confirmDanger
+        onConfirm={onCancel}
+        onCancel={() => setShowCancel(false)}
+      />
     </main>
   );
 }

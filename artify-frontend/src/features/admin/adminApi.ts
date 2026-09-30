@@ -39,7 +39,11 @@ export const adminApi = api.injectEndpoints({
       providesTags: (res) => ["AdminUser", ...(res?.data.items ?? []).map((u) => ({ type: "AdminUser" as const, id: u.userId }))],
     }),
     setUserActive: b.mutation<ApiResponse<null>, { id: number; isActive: boolean }>({
-      query: ({ id, isActive }) => ({ url: `/admin/users/${id}/active`, method: "PUT", body: isActive }),
+      query: ({ id, isActive }) => ({
+        url: `/admin/users/${id}/active`,
+        method: "PUT",
+        body: { isActive },
+      }),
       invalidatesTags: ["AdminUser"],
     }),
 
@@ -69,6 +73,10 @@ export const adminApi = api.injectEndpoints({
       query: (params) => ({ url: "/admin/orders", params: Object.fromEntries(Object.entries(params).filter(([, v]) => v)) }),
       providesTags: (res) => ["AdminOrder", ...(res?.data.items ?? []).map((o) => ({ type: "AdminOrder" as const, id: o.orderId }))],
     }),
+    getAdminOrderById: b.query<ApiResponse<OrderDetail>, number>({
+      query: (id) => `/admin/orders/${id}`,
+      providesTags: (_r, _e, id) => [{ type: "AdminOrder", id }],
+    }),
     advanceOrder: b.mutation<ApiResponse<OrderDetail>, { id: number; targetStatus?: OrderStatus }>({
       query: ({ id, targetStatus }) => ({ url: `/admin/orders/${id}/advance`, method: "PUT", body: { targetStatus } }),
       invalidatesTags: (_r, _e, { id }) => ["AdminOrder", { type: "Order", id }, "Dashboard"],
@@ -83,6 +91,6 @@ export const {
   useGetAdminUsersQuery, useSetUserActiveMutation,
   useGetMaterialsQuery, useCreateMaterialMutation, useUpdateMaterialMutation, useDeleteMaterialMutation,
   useGetFramesQuery, useCreateFrameMutation, useUpdateFrameMutation, useDeleteFrameMutation,
-  useGetAdminOrdersQuery, useAdvanceOrderMutation,
+  useGetAdminOrdersQuery, useGetAdminOrderByIdQuery, useAdvanceOrderMutation,
   useGetDashboardStatsQuery, useGetDashboardChartsQuery,
 } = adminApi;

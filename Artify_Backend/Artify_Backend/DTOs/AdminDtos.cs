@@ -16,6 +16,7 @@ public class AdminUserDto
     public DateTime CreatedAt { get; set; }
 }
 public class UserQuery { public string? Search { get; set; } public string? Role { get; set; } public int Page { get; set; } = 1; public int PageSize { get; set; } = 15; }
+public class SetUserActiveDto { public bool IsActive { get; set; } }
 
 // ---------- Materials / Frames ----------
 public class SaveMaterialDto { public string Name { get; set; } = ""; public string? Description { get; set; } public decimal PricePerSquareUnit { get; set; } public bool IsActive { get; set; } = true; }

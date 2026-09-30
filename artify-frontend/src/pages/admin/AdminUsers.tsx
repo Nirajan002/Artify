@@ -1,91 +1,211 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useGetAdminUsersQuery, useSetUserActiveMutation } from "../../features/admin/adminApi";
 import Pagination from "../../components/Pagination";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import { showToast } from "../../components/Toast";
+import { getErrorMessage } from "../../utils/errors";
+
+const ROLES = ["", "Customer", "Admin"];
 
 export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const { data, isLoading } = useGetAdminUsersQuery({ search: search || undefined, page });
-  const [setActive] = useSetUserActiveMutation();
+  const [inputVal, setInputVal] = useState("");
+  const [role, setRole] = useState("");
+  const [confirm, setConfirm] = useState<{ id: number; name: string; activate: boolean } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data, isLoading, isError, refetch } = useGetAdminUsersQuery({
+    search: search || undefined,
+    role: role || undefined,
+    page,
+  });
+  const [setActive, { isLoading: toggling }] = useSetUserActiveMutation();
   const result = data?.data;
+
+  const handleSearch = () => {
+    setSearch(inputVal.trim());
+    setPage(1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSearch();
+  };
+
+  const handleToggle = async () => {
+    if (!confirm) return;
+    try {
+      await setActive({ id: confirm.id, isActive: confirm.activate }).unwrap();
+      showToast(
+        confirm.activate
+          ? `${confirm.name} has been activated.`
+          : `${confirm.name} has been deactivated.`,
+        confirm.activate ? "success" : "info"
+      );
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
+    } finally {
+      setConfirm(null);
+    }
+  };
 
   return (
     <main>
-      <h1 style={{ marginBottom: "1.5rem" }}>Users</h1>
+      <div className="page-header">
+        <h1>Users</h1>
+        {result && (
+          <span className="page-header__count">{result.totalCount} users</span>
+        )}
+      </div>
 
-      <input
-        type="search"
-        placeholder="Search by name or email…"
-        style={{ maxWidth: "320px", marginBottom: "1.25rem" }}
-        onBlur={(e) => { setSearch(e.target.value); setPage(1); }}
-      />
+      {/* Search + role filter toolbar */}
+      <div className="table-toolbar">
+        <div className="search-row" style={{ flex: 1 }}>
+          <div className="search-input-wrap">
+            <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="search"
+              placeholder="Search by name or email…"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="search-input"
+            />
+          </div>
+          <button onClick={handleSearch} className="search-btn">Search</button>
+          {(search || inputVal) && (
+            <button
+              className="search-clear"
+              onClick={() => { setInputVal(""); setSearch(""); setPage(1); }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
-      {isLoading ? (
-        <p className="muted">Loading…</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Orders</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result?.items.map((u) => (
-              <tr key={u.userId}>
-                <td style={{ color: "#d4e8d8" }}>{u.firstName} {u.lastName}</td>
-                <td>{u.email}</td>
-                <td>
-                  <span style={{
-                    background: u.role === "Admin" ? "rgba(200,255,0,0.12)" : "rgba(200,255,0,0.04)",
-                    color: u.role === "Admin" ? "#C8FF00" : "#8ab89e",
-                    border: `1px solid ${u.role === "Admin" ? "rgba(200,255,0,0.3)" : "rgba(200,255,0,0.1)"}`,
-                    borderRadius: "999px",
-                    padding: "0.15rem 0.6rem",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                  }}>
-                    {u.role}
-                  </span>
-                </td>
-                <td>{u.orderCount}</td>
-                <td>
-                  <span style={{
-                    color: u.isActive ? "#50dc8c" : "#ff8080",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                  }}>
-                    {u.isActive ? "Active" : "Deactivated"}
-                  </span>
-                </td>
-                <td>
-                  {u.role !== "Admin" && (
-                    <button
-                      onClick={() => setActive({ id: u.userId, isActive: !u.isActive })}
-                      style={{
-                        background: "none",
-                        color: u.isActive ? "#ff8080" : "#50dc8c",
-                        border: `1px solid ${u.isActive ? "rgba(255,128,128,0.3)" : "rgba(80,220,140,0.3)"}`,
-                        padding: "0.3rem 0.65rem",
-                        fontSize: "0.8rem",
-                        boxShadow: "none",
-                      }}
-                    >
-                      {u.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <select
+          value={role}
+          onChange={(e) => { setRole(e.target.value); setPage(1); }}
+          className="filter-select"
+          aria-label="Filter by role"
+        >
+          {ROLES.map((r) => (
+            <option key={r} value={r}>{r || "All roles"}</option>
+          ))}
+        </select>
+      </div>
+
+      {isLoading && (
+        <div className="table-loading">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="skeleton-row" />
+          ))}
+        </div>
       )}
 
-      {result && <Pagination page={result.page} totalPages={result.totalPages} onChange={setPage} />}
+      {isError && (
+        <div className="state-card state-card--error">
+          <p>Failed to load users.</p>
+          <button onClick={refetch}>Try again</button>
+        </div>
+      )}
+
+      {!isLoading && !isError && result && (
+        <>
+          {result.items.length === 0 ? (
+            <div className="state-card">
+              <div className="state-card__icon">👥</div>
+              <p className="muted">No users found{search ? ` for "${search}"` : ""}.</p>
+              {(search || role) && (
+                <button onClick={() => { setInputVal(""); setSearch(""); setRole(""); setPage(1); }}>
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Orders</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.items.map((u) => (
+                    <tr key={u.userId}>
+                      <td>
+                        <span className="user-name">{u.firstName} {u.lastName}</span>
+                      </td>
+                      <td className="muted">{u.email}</td>
+                      <td>
+                        <span className={`role-badge role-badge--${u.role.toLowerCase()}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td>{u.orderCount}</td>
+                      <td className="muted">{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`status-dot ${u.isActive ? "status-dot--active" : "status-dot--inactive"}`}>
+                          {u.isActive ? "Active" : "Deactivated"}
+                        </span>
+                      </td>
+                      <td>
+                        {u.role !== "Admin" && (
+                          <button
+                            onClick={() =>
+                              setConfirm({
+                                id: u.userId,
+                                name: `${u.firstName} ${u.lastName}`,
+                                activate: !u.isActive,
+                              })
+                            }
+                            disabled={toggling}
+                            className={
+                              u.isActive
+                                ? "btn-action btn-action--danger"
+                                : "btn-action btn-action--success"
+                            }
+                          >
+                            {u.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <Pagination
+            page={result.page}
+            totalPages={result.totalPages}
+            onChange={(p) => setPage(p)}
+          />
+        </>
+      )}
+
+      <ConfirmDialog
+        open={!!confirm}
+        title={confirm?.activate ? "Activate User" : "Deactivate User"}
+        message={
+          confirm?.activate
+            ? `Activate ${confirm?.name}? They will regain access to the platform.`
+            : `Deactivate ${confirm?.name}? They will lose access to the platform.`
+        }
+        confirmLabel={confirm?.activate ? "Activate" : "Deactivate"}
+        confirmDanger={!confirm?.activate}
+        onConfirm={handleToggle}
+        onCancel={() => setConfirm(null)}
+      />
     </main>
   );
 }
