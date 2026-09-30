@@ -5,6 +5,7 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import { StarDisplay } from "../../components/StarRating";
 import { showToast } from "../../components/Toast";
 import { getErrorMessage } from "../../utils/errors";
+import { imageUrl } from "../../utils/image";
 
 const FILTER_OPTIONS = [
   { value: undefined, label: "All reviews" },
@@ -136,7 +137,7 @@ export default function AdminReviews() {
                         <div className="admin-review-artwork">
                           {r.artworkImageUrl && (
                             <img
-                              src={r.artworkImageUrl}
+                              src={imageUrl(r.artworkImageUrl)}
                               alt={r.artworkTitle}
                               className="admin-review-artwork__img"
                             />
