@@ -124,9 +124,10 @@ public class Review
     public int ArtworkId { get; set; }
     public Artwork Artwork { get; set; } = null!;
     public int OrderId { get; set; }
+    public Order Order { get; set; } = null!;
     public int Rating { get; set; }
     public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    public bool IsApproved { get; set; } = true;
+    public bool IsApproved { get; set; } = false;
 }

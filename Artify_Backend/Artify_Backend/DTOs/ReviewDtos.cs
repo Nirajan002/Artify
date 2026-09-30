@@ -40,3 +40,26 @@ public class ReviewEligibilityDto
 }
 
 public record PurchasedOrderDto(int OrderId, string OrderNumber, DateTime DeliveredOrPlacedAt);
+
+public class AdminReviewDto
+{
+    public int ReviewId { get; set; }
+    public int UserId { get; set; }
+    public string ReviewerName { get; set; } = "";
+    public string ReviewerEmail { get; set; } = "";
+    public int ArtworkId { get; set; }
+    public string ArtworkTitle { get; set; } = "";
+    public string? ArtworkImageUrl { get; set; }
+    public int OrderId { get; set; }
+    public string OrderNumber { get; set; } = "";
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
+    public bool IsApproved { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+
+public class SetReviewApprovedDto
+{
+    public bool IsApproved { get; set; }
+}

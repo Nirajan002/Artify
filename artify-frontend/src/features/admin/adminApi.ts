@@ -22,6 +22,14 @@ export interface AdminOrder {
   hasCustomPrint: boolean; createdAt: string;
 }
 
+// ---------- Reviews ----------
+export interface AdminReview {
+  reviewId: number; userId: number; reviewerName: string; reviewerEmail: string;
+  artworkId: number; artworkTitle: string; artworkImageUrl?: string;
+  orderId: number; orderNumber: string; rating: number; comment?: string;
+  isApproved: boolean; createdAt: string; updatedAt?: string;
+}
+
 // ---------- Dashboard ----------
 export interface DashboardStats {
   totalUsers: number; totalArtworks: number; totalOrders: number; totalRevenue: number;
@@ -84,6 +92,19 @@ export const adminApi = api.injectEndpoints({
 
     getDashboardStats: b.query<ApiResponse<DashboardStats>, void>({ query: () => "/admin/dashboard/stats", providesTags: ["Dashboard"] }),
     getDashboardCharts: b.query<ApiResponse<DashboardCharts>, void>({ query: () => "/admin/dashboard/charts", providesTags: ["Dashboard"] }),
+
+    getAdminReviews: b.query<ApiResponse<Paged<AdminReview>>, { isApproved?: boolean; page?: number }>({
+      query: (params) => ({ url: "/admin/reviews", params: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined)) }),
+      providesTags: (res) => ["AdminReview", ...(res?.data.items ?? []).map((r) => ({ type: "AdminReview" as const, id: r.reviewId }))],
+    }),
+    setReviewApproval: b.mutation<ApiResponse<null>, { id: number; isApproved: boolean }>({
+      query: ({ id, isApproved }) => ({ url: `/admin/reviews/${id}/approval`, method: "PUT", body: { isApproved } }),
+      invalidatesTags: ["AdminReview", "Review"],
+    }),
+    deleteAdminReview: b.mutation<ApiResponse<null>, number>({
+      query: (id) => ({ url: `/admin/reviews/${id}`, method: "DELETE" }),
+      invalidatesTags: ["AdminReview", "Review"],
+    }),
   }),
 });
 
@@ -93,4 +114,5 @@ export const {
   useGetFramesQuery, useCreateFrameMutation, useUpdateFrameMutation, useDeleteFrameMutation,
   useGetAdminOrdersQuery, useGetAdminOrderByIdQuery, useAdvanceOrderMutation,
   useGetDashboardStatsQuery, useGetDashboardChartsQuery,
+  useGetAdminReviewsQuery, useSetReviewApprovalMutation, useDeleteAdminReviewMutation,
 } = adminApi;

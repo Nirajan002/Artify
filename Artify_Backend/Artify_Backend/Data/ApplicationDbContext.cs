@@ -574,6 +574,12 @@ public class ApplicationDbContext : DbContext
                 .WithMany(x => x.Reviews)
                 .HasForeignKey(x => x.ArtworkId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+
+            e.HasOne(x => x.Order)
+                .WithMany()
+                .HasForeignKey(x => x.OrderId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
 

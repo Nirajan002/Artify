@@ -6,6 +6,7 @@ const LINKS = [
   { to: "/admin/artworks", label: "Artworks", icon: "🖼" },
   { to: "/admin/submissions", label: "Submissions", icon: "📥" },
   { to: "/admin/orders", label: "Orders", icon: "📦" },
+  { to: "/admin/reviews", label: "Reviews", icon: "⭐" },
   { to: "/admin/materials", label: "Materials", icon: "🎨" },
   { to: "/admin/frames", label: "Frames", icon: "🖼" },
   { to: "/admin/users", label: "Users", icon: "👥" },

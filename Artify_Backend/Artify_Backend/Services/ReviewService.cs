@@ -1,6 +1,7 @@
 ﻿using Artify.API.Data;
 using Artify.API.DTOs;
 using Artify.API.Entities;
+using Artify.API.Helpers;
 using Artify.API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -96,7 +97,7 @@ public class ReviewService(ApplicationDbContext db) : IReviewService
             OrderId = dto.OrderId,
             Rating = dto.Rating,
             Comment = dto.Comment?.Trim(),
-            IsApproved = true
+            IsApproved = false  // Reviews need admin approval by default
         };
         db.Reviews.Add(review);
 
@@ -130,6 +131,57 @@ public class ReviewService(ApplicationDbContext db) : IReviewService
     {
         var review = await db.Reviews.FindAsync(reviewId) ?? throw new KeyNotFoundException("Review not found");
         db.Reviews.Remove(review);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<PagedResult<AdminReviewDto>> GetAllAdminAsync(int page, int pageSize, bool? isApproved)
+    {
+        var query = db.Reviews.AsNoTracking().AsQueryable();
+        
+        if (isApproved.HasValue)
+            query = query.Where(r => r.IsApproved == isApproved.Value);
+
+        var total = await query.CountAsync();
+
+        var reviews = await query
+            .Include(r => r.User)
+            .Include(r => r.Artwork)
+            .Include(r => r.Order)
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(r => new AdminReviewDto
+            {
+                ReviewId = r.ReviewId,
+                UserId = r.UserId,
+                ReviewerName = r.User.FirstName + " " + r.User.LastName,
+                ReviewerEmail = r.User.Email,
+                ArtworkId = r.ArtworkId,
+                ArtworkTitle = r.Artwork.Title,
+                ArtworkImageUrl = r.Artwork.ImageUrl,
+                OrderId = r.OrderId,
+                OrderNumber = r.Order.OrderNumber,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                IsApproved = r.IsApproved,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
+            })
+            .ToListAsync();
+
+        return new PagedResult<AdminReviewDto>
+        {
+            Items = reviews,
+            TotalCount = total,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task SetApprovedAsync(int reviewId, bool isApproved)
+    {
+        var review = await db.Reviews.FindAsync(reviewId) ?? throw new KeyNotFoundException("Review not found");
+        review.IsApproved = isApproved;
         await db.SaveChangesAsync();
     }
 

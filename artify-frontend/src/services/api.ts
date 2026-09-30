@@ -55,6 +55,7 @@ export const api = createApi({
     "Material",
     "Frame",
     "AdminOrder",
+    "AdminReview",
     "Dashboard",
   ],
   endpoints: () => ({}),

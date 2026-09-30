@@ -22,6 +22,7 @@ import AdminArtworkForm from "./pages/admin/AdminArtworkForm";
 import AdminMaterials from "./pages/admin/AdminMaterials";
 import AdminFrames from "./pages/admin/AdminFrames";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminReviews from "./pages/admin/AdminReviews";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import Home from "./pages/Home";
@@ -65,6 +66,7 @@ export default function App() {
             />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
             <Route path="/admin/materials" element={<AdminMaterials />} />
             <Route path="/admin/frames" element={<AdminFrames />} />
             <Route path="/admin/users" element={<AdminUsers />} />

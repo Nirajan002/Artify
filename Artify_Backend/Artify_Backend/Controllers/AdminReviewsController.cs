@@ -7,10 +7,27 @@ namespace Artify.API.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Admin")]
-[Route("api/admin/reviews/{id:int}")]
+[Route("api/admin/reviews")]
 public class AdminReviewsController(IReviewService reviews) : ControllerBase
 {
-    [HttpDelete]
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResult<AdminReviewDto>>>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] bool? isApproved = null)
+    {
+        var result = await reviews.GetAllAdminAsync(page, pageSize, isApproved);
+        return Ok(ApiResponse<PagedResult<AdminReviewDto>>.Ok(result));
+    }
+
+    [HttpPut("{id:int}/approval")]
+    public async Task<ActionResult<ApiResponse<object>>> SetApproval(int id, [FromBody] SetReviewApprovedDto dto)
+    {
+        await reviews.SetApprovedAsync(id, dto.IsApproved);
+        return Ok(ApiResponse<object>.Ok(null!, dto.IsApproved ? "Review approved" : "Review rejected"));
+    }
+
+    [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
     {
         await reviews.AdminDeleteAsync(id);
