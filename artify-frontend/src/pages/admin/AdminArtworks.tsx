@@ -149,7 +149,7 @@ export default function AdminArtworks() {
                     <th></th>
                     <th>Title</th>
                     <th>Category</th>
-                    <th>From</th>
+                    <th title="Lowest variant price (shop display price)">From</th>
                     <th>Status</th>
                     <th>Rating</th>
                     <th>Actions</th>

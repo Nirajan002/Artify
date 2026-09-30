@@ -46,7 +46,7 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
   const [categoryId, setCategoryId] = useState(artwork ? String(artwork.categoryId) : "");
   const [artworkType, setArtworkType] = useState(artwork?.artworkType ?? "Painting");
   const [originalPrice, setOriginalPrice] = useState(artwork ? String(artwork.originalPrice) : "");
-  const [status, setStatus] = useState(artwork?.status ?? "Draft");
+  const [status, setStatus] = useState(artwork?.status ?? "Published");
   const [isOriginalAvailable, setIsOriginalAvailable] = useState(artwork?.isOriginalAvailable ?? true);
   const [isPrintAvailable, setIsPrintAvailable] = useState(artwork?.isPrintAvailable ?? true);
   const [imageUrlValue] = useState(artwork?.imageUrl ?? "");
@@ -156,8 +156,11 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
 
           <label style={fieldStyle}>
             <span style={spanStyle}>Original price (Rs.)</span>
-            <input type="number" min={0} step="any" value={originalPrice}
+            <input type="number" min={0} step="0.01" value={originalPrice}
               onChange={(e) => setOriginalPrice(e.target.value)} required />
+            <small style={{ fontSize: "0.75rem", color: "#4a6b5a", marginTop: "0.2rem" }}>
+              Base price for the physical original artwork (if selling the original)
+            </small>
           </label>
 
           <label style={fieldStyle}>
@@ -201,8 +204,25 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
           {/* Variants */}
           <fieldset style={{ border: "1px solid rgba(200,255,0,0.15)", borderRadius: "10px", padding: "1.25rem" }}>
             <legend style={{ color: "#6a9a80", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 0.4rem" }}>
-              Variants
+              Variants (print types & prices)
             </legend>
+
+            <p style={{ fontSize: "0.82rem", color: "#5a8070", marginBottom: "1rem", lineHeight: "1.5" }}>
+              Add different print variants with their prices. "Original" = the physical artwork. Other variants = prints on different materials.
+            </p>
+
+            {/* Header row */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr auto auto", gap: "0.5rem",
+              paddingBottom: "0.5rem", borderBottom: "1px solid rgba(200,255,0,0.08)", marginBottom: "0.75rem",
+              fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#4a7060",
+            }}>
+              <span>Type</span>
+              <span>Price (Rs.)</span>
+              <span>Stock Qty</span>
+              <span style={{ textAlign: "center" }}>Available</span>
+              <span></span>
+            </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               {variants.map((v, i) => (
@@ -220,17 +240,17 @@ function ArtworkForm({ existing, isEdit, categories }: ArtworkFormProps) {
                     ))}
                   </select>
 
-                  <input type="number" min={0} placeholder="Price"
+                  <input type="number" min={0} step="0.01"
                     value={v.basePrice}
                     onChange={(e) => updateVariant(i, { basePrice: e.target.value })} />
 
-                  <input type="number" min={0} placeholder="Stock"
-                    value={v.stockQuantity} onChange={(e) => updateVariant(i, { stockQuantity: Number(e.target.value) })} />
+                  <input type="number" min={0}
+                    value={v.stockQuantity}
+                    onChange={(e) => updateVariant(i, { stockQuantity: Number(e.target.value) })} />
 
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.8rem", color: "#8ab89e", whiteSpace: "nowrap" }}>
+                  <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.8rem", color: "#8ab89e", whiteSpace: "nowrap" }}>
                     <input type="checkbox" checked={v.isAvailable}
                       onChange={(e) => updateVariant(i, { isAvailable: e.target.checked })} />
-                    Active
                   </label>
 
                   {variants.length > 1 && (
