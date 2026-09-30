@@ -157,14 +157,15 @@ builder.Services.AddAuthorization();
 // CORS
 // ============================================================
 
+var corsOrigins = (builder.Configuration["Cors:Origins"] ?? "http://localhost:5173")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy( policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy
-            .WithOrigins(
-                builder.Configuration["Cors:Origin"]!
-            )
+            .WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
